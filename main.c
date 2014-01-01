@@ -70,16 +70,16 @@ int g_pipe_id; //0x00000EBC
 int g_active_connections; //0x00000F00
 int g_enable_kermit; //0x00000F04
 
-inline static int pspClz(int a)
+inline static unsigned int pspClz(unsigned int a)
 {
-	int ret;
+	unsigned int ret;
 	asm volatile ("clz %0, %1\n" : "=r" (ret) : "r" (a));
 	return ret;
 }
 
-inline static int pspBitrev(int a)
+inline static unsigned int pspBitrev(unsigned int a)
 {
-	int ret;
+	unsigned int ret;
 	asm volatile ("bitrev %0, %1\n" : "=r" (ret) : "r" (a));
 	return ret;
 }
@@ -127,15 +127,15 @@ __attribute__((noinline)) void sceKermitWait()
 }
 
 //0x000009D8
-void sceKermitCallVirtualInterruptHandler(int high_bits) 
+void sceKermitCallVirtualInterruptHandler(unsigned int high_bits) 
 {
 	if(high_bits != 0)
 	{
-		int i = 0;
+		unsigned int i = 0;
 
 		do
 		{
-			int clz = pspClz(pspBitrev(high_bits));
+			unsigned int clz = pspClz(pspBitrev(high_bits));
 
 			i += clz;
 
@@ -164,27 +164,27 @@ int interrupt_handler()
 	int intr = sceKernelCpuSuspendIntr();
 
 	/* Unmask */
-	int bits = REG32(0xBC300030) & ~0x4002;
+	unsigned int bits = REG32(0xBC300030) & ~0x4002;
 	REG32(0xBC300030) = bits;
 	pspSync();
 
 	/* High bits reserved for interrupt handlers */
-	int high_bits = (bits >> 16);
+	unsigned int high_bits = (bits >> 16);
 	if(high_bits != 0)
 	{
 		sceKermitCallVirtualInterruptHandler(high_bits);
 	}
 
 	/* Low bits reserved for sema signals */
-	int low_bits = bits & 0xFFFF;
+	unsigned int low_bits = bits & 0xFFFF;
 
 	if(low_bits != 0)
 	{
-		int i = 0;
+		unsigned int i = 0;
 
 		do
 		{
-			int clz = pspClz(pspBitrev(low_bits));
+			unsigned int clz = pspClz(pspBitrev(low_bits));
 
 			i += clz;
 
@@ -201,7 +201,7 @@ int interrupt_handler()
 				}
 				else if(i < 10)
 				{
-					int num = i - 7;
+					unsigned int num = i - 7;
 					KermitReponse *kermit_reponse = (KermitReponse *)0xBFC00840;
 
 					*kermit_reponse[num].reponse = kermit_reponse[num].result;
@@ -222,7 +222,7 @@ int interrupt_handler()
 }
 
 //0x00000A6C
-int GetVramOrScratchpadAddr(void *data, int size)
+int GetVramOrScratchpadAddr(void *data, unsigned int size)
 {
 	u32 physical_address = 0;
 	u32 io_base = 0;
@@ -269,7 +269,7 @@ int sceKermitIsActiveConnection()
 }
 
 //0x000006BC
-int sceKermitRegisterVirtualIntrHandler(int num, int (* handler)())
+int sceKermitRegisterVirtualIntrHandler(unsigned int num, int (* handler)())
 {
 	if(num < MAX_INTR_HANDLERS)
 	{
@@ -288,7 +288,7 @@ int sceKermitDisplaySync()
 	REG32(0xBE140000) &= ~1;
 
 	/* Wait 64 microseconds */
-	int timelow = sceKernelGetSystemTimeLow();
+	unsigned int timelow = sceKernelGetSystemTimeLow();
 	while((sceKernelGetSystemTimeLow() - timelow) < 64);
 
 	/* Set register */
@@ -311,7 +311,7 @@ int sceKermitDisplaySync()
 
 //not used in any kermit module
 //0x00000178
-int sceKermitSendNumber(int num, int is_callback) 
+int sceKermitSendNumber(unsigned int num, unsigned int is_callback) 
 {
 	int res;
 
@@ -331,7 +331,7 @@ int sceKermitSendNumber(int num, int is_callback)
 
 	/* Signal */
 	int intr = sceKernelCpuSuspendIntr();
-	int val = 1 << num;
+	unsigned int val = 1 << num;
 	REG32(0xBC300038) |= val;
 	SetRegister(0xBC300050, val);
 	sceKernelCpuResumeIntr(intr);
@@ -358,7 +358,7 @@ int sceKermitSendNumber(int num, int is_callback)
 }
 
 //0x00000394
-int sceKermitSendCommand(KermitPacket *packet, u32 cmd_mode, u32 cmd, int argc, int is_callback, u64 *resp)
+int sceKermitSendCommand(KermitPacket *packet, u32 cmd_mode, u32 cmd, unsigned int argc, unsigned int is_callback, u64 *resp)
 {
 	int res;
 	int intr;
@@ -377,7 +377,7 @@ int sceKermitSendCommand(KermitPacket *packet, u32 cmd_mode, u32 cmd, int argc, 
 	g_active_connections++;
 	sceKernelCpuResumeIntr(intr);
 
-	int num;
+	unsigned int num;
 
 	switch(cmd_mode)
 	{
@@ -414,7 +414,7 @@ int sceKermitSendCommand(KermitPacket *packet, u32 cmd_mode, u32 cmd, int argc, 
 	packet->sema_id = sema_id;
 	packet->reponse = (u64 *)packet;
 
-	int packet_size = ((argc + sizeof(u64) + 1) & 0xFFFFFFF8) * sizeof(u64);
+	unsigned int packet_size = ((argc + sizeof(u64) + 1) & 0xFFFFFFF8) * sizeof(u64);
 	kermit_command[num].kermit_addr = GetVramOrScratchpadAddr(packet, packet_size);
 
 	sceKermitWait();
@@ -562,7 +562,7 @@ int sceKermitEnd()
 	}
 
 	/* Delete semaphores */
-	int i;
+	unsigned int i;
 	for(i = 0; i < MAX_SEMA_IDS_1; i++)
 	{
 		int res = sceKernelDeleteSema(g_sema_ids_1[i]);
