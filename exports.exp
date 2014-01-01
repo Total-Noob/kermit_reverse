@@ -1,0 +1,18 @@
+PSP_BEGIN_EXPORTS
+
+PSP_EXPORT_START(syslib, 0, 0x8000)
+PSP_EXPORT_FUNC(module_start)
+PSP_EXPORT_FUNC(module_reboot_before)
+PSP_EXPORT_VAR(module_info)
+PSP_EXPORT_END
+
+PSP_EXPORT_START(sceKermit_driver, 0x11, 0x0001)
+PSP_EXPORT_FUNC_NID(sceKermitRegisterVirtualIntrHandler, 0x2CB23ED7)
+PSP_EXPORT_FUNC_NID(sceKermitIsActiveConnection, 0x351B5CC4)
+PSP_EXPORT_FUNC_NID(sceKermitSendCommand, 0x4F75AA05)
+PSP_EXPORT_FUNC_NID(sceKermitDisableKermit, 0x6985A4D9)
+PSP_EXPORT_FUNC_NID(sceKermitDisplaySync, 0x858F0C6D)
+PSP_EXPORT_FUNC_NID(sceKermitSendNumber, 0x9160841C)
+PSP_EXPORT_END
+
+PSP_END_EXPORTS
