@@ -72,28 +72,28 @@ int g_enable_kermit; //0x00000F04
 
 inline static int pspClz(int a)
 {
-    int ret;
-    asm volatile ("clz %0, %1\n" : "=r" (ret) : "r" (a));
-    return ret;
+	int ret;
+	asm volatile ("clz %0, %1\n" : "=r" (ret) : "r" (a));
+	return ret;
 }
 
 inline static int pspBitrev(int a)
 {
-    int ret;
-    asm volatile ("bitrev %0, %1\n" : "=r" (ret) : "r" (a));
-    return ret;
+	int ret;
+	asm volatile ("bitrev %0, %1\n" : "=r" (ret) : "r" (a));
+	return ret;
 }
 
 inline static int pspMin(int a, int b)
 {
-    int ret;
-    asm volatile ("min %0, %1, %2\n" : "=r" (ret) : "r" (a), "r" (b));
-    return ret;
+	int ret;
+	asm volatile ("min %0, %1, %2\n" : "=r" (ret) : "r" (a), "r" (b));
+	return ret;
 }
 
 inline static void pspSync()
 {
-    asm volatile ("sync\n");
+	asm volatile ("sync\n");
 }
 
 inline static void SetRegister(u32 reg, u32 val)
@@ -227,9 +227,9 @@ int GetVramOrScratchpadAddr(void *data, int size)
 	u32 physical_address = 0;
 	u32 io_base = 0;
 
-    u32 data_addr = ((u32)data & 0x1FFFFFFF);
+	u32 data_addr = ((u32)data & 0x1FFFFFFF);
 
-    if(0x7FFFFF < (data_addr + 0xFC000000))
+	if(0x7FFFFF < (data_addr + 0xFC000000))
 	{
 		if((data_addr + 0xFFFF0000) >= 0x4000)
 		{
@@ -247,7 +247,7 @@ int GetVramOrScratchpadAddr(void *data, int size)
 		io_base = 0x1E00000;
 	}
 
-    u32 kermit_addr = (((physical_address + io_base) + 0xAA000000) & 0x9FFFFFFF);
+	u32 kermit_addr = (((physical_address + io_base) + 0xAA000000) & 0x9FFFFFFF);
 
 	memcpy((void *)kermit_addr, data, size);
 	sceKernelDcacheWritebackInvalidateRange((void *)kermit_addr, size);
