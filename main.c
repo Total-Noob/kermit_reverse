@@ -129,7 +129,7 @@ __attribute__((noinline)) void sceKermitWait()
 //0x000009D8
 void sceKermitCallVirtualInterruptHandler(unsigned int high_bits) 
 {
-	if(high_bits != 0)
+	if(high_bits)
 	{
 		unsigned int i = 0;
 
@@ -154,7 +154,7 @@ void sceKermitCallVirtualInterruptHandler(unsigned int high_bits)
 			kermit_interrupt[i].unk_0 = 0;
 
 			i++;
-		} while(high_bits != 0);
+		} while(high_bits);
 	}
 }
 
@@ -170,7 +170,7 @@ int interrupt_handler()
 
 	/* High bits reserved for interrupt handlers */
 	unsigned int high_bits = (bits >> 16);
-	if(high_bits != 0)
+	if(high_bits)
 	{
 		sceKermitCallVirtualInterruptHandler(high_bits);
 	}
@@ -178,7 +178,7 @@ int interrupt_handler()
 	/* Low bits reserved for sema signals */
 	unsigned int low_bits = bits & 0xFFFF;
 
-	if(low_bits != 0)
+	if(low_bits)
 	{
 		unsigned int i = 0;
 
@@ -214,7 +214,7 @@ int interrupt_handler()
 			}
 
 			i++;
-		} while(low_bits != 0);
+		} while(low_bits);
 	}
 
 	sceKernelCpuResumeIntr(intr);
@@ -316,7 +316,7 @@ int sceKermitSendNumber(unsigned int num, unsigned int is_callback)
 	int res;
 
 	res = sceKernelPowerLock(1);
-	if(res != 0)
+	if(res)
 	{
 		return res;
 	}
@@ -347,7 +347,7 @@ int sceKermitSendNumber(unsigned int num, unsigned int is_callback)
 		res = sceKernelWaitSema(sema_id, 1, NULL);
 	}
 
-	if(res != 0)
+	if(res)
 	{
 		sceKernelPowerUnlock(1);
 		return pspMin(res, 0);
@@ -396,13 +396,13 @@ int sceKermitSendCommand(KermitPacket *packet, u32 cmd_mode, u32 cmd, unsigned i
 
 	SceUInt timeout = 5 * 1000 * 1000;
 	res = sceKernelWaitSema(g_sema_ids_2[num], 1, &timeout);
-	if(res != 0)
+	if(res)
 	{
 		goto EXIT;
 	}
 
 	res = sceKernelReceiveMsgPipe(g_pipe_id, &sema_id, sizeof(SceUID), 0, 0, NULL);
-	if(res != 0)
+	if(res)
 	{
 		goto EXIT;
 	}
@@ -420,7 +420,7 @@ int sceKermitSendCommand(KermitPacket *packet, u32 cmd_mode, u32 cmd, unsigned i
 	sceKermitWait();
 
 	res = sceKernelPowerLock(1);
-	if(res != 0)
+	if(res)
 	{
 		goto EXIT;
 	}
@@ -441,7 +441,7 @@ int sceKermitSendCommand(KermitPacket *packet, u32 cmd_mode, u32 cmd, unsigned i
 	}
 
 	res = sceKernelSendMsgPipe(g_pipe_id, &sema_id, sizeof(SceUID), 0, NULL, NULL);
-	if(res != 0)
+	if(res)
 	{
 		sceKernelPowerUnlock(1);
 		goto EXIT;
@@ -556,7 +556,7 @@ int sceKermitEnd()
 
 	/* Release interrupt handler */
 	int res = sceKernelReleaseIntrHandler(PSP_MECODEC_INT);
-	if(res != 0)
+	if(res)
 	{
 		return res;
 	}
@@ -566,7 +566,7 @@ int sceKermitEnd()
 	for(i = 0; i < MAX_SEMA_IDS_1; i++)
 	{
 		int res = sceKernelDeleteSema(g_sema_ids_1[i]);
-		if(res != 0)
+		if(res)
 		{
 			return res;
 		}
