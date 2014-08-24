@@ -129,32 +129,28 @@ __attribute__((noinline)) void sceKermitWait()
 //0x000009D8
 void sceKermitCallVirtualInterruptHandler(unsigned int high_bits) 
 {
-	if(high_bits)
-	{
-		unsigned int i = 0;
+	unsigned int i = 0;
 
-		do
+	while(high_bits) {
+		unsigned int clz = pspClz(pspBitrev(high_bits));
+
+		i += clz;
+
+		high_bits >>= clz;
+		high_bits >>= 1;
+
+		/* Call interrupt handler */
+		void (* handler)() = (void *)g_virtual_intr_handlers[i];
+		if(handler)
 		{
-			unsigned int clz = pspClz(pspBitrev(high_bits));
+			handler();
+		}
 
-			i += clz;
+		/* Set something */
+		KermitInterrupt *kermit_interrupt = (KermitInterrupt *)0xBFC008C0;
+		kermit_interrupt[i].unk_0 = 0;
 
-			high_bits >>= clz;
-			high_bits >>= 1;
-
-			/* Call interrupt handler */
-			void (* handler)() = (void *)g_virtual_intr_handlers[i];
-			if(handler)
-			{
-				handler();
-			}
-
-			/* Set something */
-			KermitInterrupt *kermit_interrupt = (KermitInterrupt *)0xBFC008C0;
-			kermit_interrupt[i].unk_0 = 0;
-
-			i++;
-		} while(high_bits);
+		i++;
 	}
 }
 
@@ -178,43 +174,39 @@ int interrupt_handler()
 	/* Low bits reserved for sema signals */
 	unsigned int low_bits = bits & 0xFFFF;
 
-	if(low_bits)
-	{
-		unsigned int i = 0;
+	unsigned int i = 0;
+	while(low_bits)	{
+		unsigned int clz = pspClz(pspBitrev(low_bits));
 
-		do
+		i += clz;
+
+		low_bits >>= clz;
+		low_bits >>= 1;
+
+		if(i >= 4)
 		{
-			unsigned int clz = pspClz(pspBitrev(low_bits));
-
-			i += clz;
-
-			low_bits >>= clz;
-			low_bits >>= 1;
-
-			if(i >= 4)
+			if(i < 7)
 			{
-				if(i < 7)
-				{
-					/* Signal for sceKermitSendCommand */
-					int num = i - 4;
-					sceKernelSignalSema(g_sema_ids_2[num], 1);
-				}
-				else if(i < 10)
-				{
-					unsigned int num = i - 7;
-					KermitReponse *kermit_reponse = (KermitReponse *)0xBFC00840;
+				/* Signal for sceKermitSendCommand */
+				int num = i - 4;
+				sceKernelSignalSema(g_sema_ids_2[num], 1);
+			}
+			else if(i < 10)
+			{
+				unsigned int num = i - 7;
+				KermitReponse *kermit_reponse = (KermitReponse *)0xBFC00840;
 
-					*kermit_reponse[num].reponse = kermit_reponse[num].result;
+				*kermit_reponse[num].reponse = kermit_reponse[num].result;
 
-					if(sceKernelSignalSema(kermit_reponse[num].sema_id, 1) == 0)
-					{
-						SetRegister(0xBC300050, 1 << i);
-					}
+				if(sceKernelSignalSema(kermit_reponse[num].sema_id, 1) == 0)
+				{
+					SetRegister(0xBC300050, 1 << i);
 				}
 			}
+		}
 
-			i++;
-		} while(low_bits);
+		i++;
+
 	}
 
 	sceKernelCpuResumeIntr(intr);
